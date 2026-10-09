@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "stokechat",
+  "version": "${version}",
+  "name": "StokeChat",
+  "description": "Forwards Minecraft chat and server activity announcements to Discord via a webhook.",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.stokechat.StokeChat"
+    ]
+  },
+  "mixins": [
+    "stokechat.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*"
+  }
+}

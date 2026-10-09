@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "net.stokechat.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [
+    "ChatScreenMixin"
+  ],
+  "server": [
+    "StokeChatServerPacketListenerMixin",
+    "CommandRegistryMixin",
+    "PlayerManagerMixin",
+    "DedicatedServerMixin",
+    "MinecraftServerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
