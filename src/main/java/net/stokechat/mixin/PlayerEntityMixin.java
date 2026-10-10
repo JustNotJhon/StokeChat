@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PlayerEntityMixin {
     @Inject(method = "incrementStat(Lnet/minecraft/stat/Stat;I)V", at = @At("HEAD"))
     private void stokechat$announceStat(Stat stat, int amount, CallbackInfo ci) {
-        if (!(this instanceof ServerPlayerEntity)) return;
+        if (!((Object) this instanceof ServerPlayerEntity)) return;
 
         String player = ((ServerPlayerEntity) (Object) this).getUsername();
         if (stat == Stats.DEATHS) {
