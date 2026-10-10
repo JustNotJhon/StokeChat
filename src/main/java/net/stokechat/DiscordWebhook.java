@@ -201,6 +201,14 @@ public final class DiscordWebhook {
         enqueue("⬅️ **" + player + "** left the server.", "departure of " + player, 0);
     }
 
+    public static void announcePlayerDeath(String player) {
+        enqueue("💀 **" + player + "** died.", "death of " + player, 0);
+    }
+
+    public static void announceAchievement(String player) {
+        enqueue("🏆 **" + player + "** earned an achievement.", "achievement earned by " + player, 0);
+    }
+
     private static Future<?> enqueue(String content, String description, int messageLength) {
         final String url = webhookUrl;
         if (url == null || url.isEmpty()) {

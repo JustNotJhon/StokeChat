@@ -2,7 +2,9 @@
   "required": true,
   "package": "net.stokechat.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "PlayerEntityMixin"
+  ],
   "client": [
     "ChatScreenMixin"
   ],

@@ -1,5 +1,39 @@
 # StokeChat
 
+A server-side mod for Minecraft 1.6.4 Legacy Fabric / Better Than Wolves servers. StokeChat sends in-game chat, player join and leave notices, deaths, achievements, and server startup and shutdown announcements to Discord through a webhook.
+
+## Setup
+
+1. Place the compiled JAR in the server's `mods/` directory.
+2. Optionally install the same JAR on the client to allow longer URLs in the in-game chat field.
+3. As an operator (permission level 2), configure the webhook in-game or from the server console:
+
+   ```text
+   /webhook https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN
+   ```
+
+   Alternatively, create `config/stokechat.conf` in the server's working directory and put the complete webhook URL on a single line. Restart the server after editing the file manually. A webhook set with `/webhook` is saved and activated immediately.
+
+## Keep Your Webhook Private
+
+The webhook URL contains a secret token. Do not share it, commit it, or include it in screenshots or logs. If it is exposed, revoke it in Discord and create a replacement.
+
+## Build from Source
+
+Run the Gradle wrapper from the repository root:
+
+```sh
+./gradlew build
+```
+
+On Windows, use:
+
+```bat
+gradlew.bat build
+```
+
+The installable JAR is written to `build/libs/`.# StokeChat
+
 StokeChat is a server-side Minecraft mod that forwards normal in-game chat to a Discord channel through a Discord webhook. It can also announce server startup and player joins and departures.
 
 ## Features
