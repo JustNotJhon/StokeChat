@@ -52,7 +52,3 @@ To generate Minecraft sources:
 ```sh
 ./gradlew genSources
 ```
-
-## Project details
-
-The Fabric mod ID, Java packages, mixin configuration, project name, and built artifact are all named **StokeChat**.
