@@ -24,10 +24,6 @@ import java.util.regex.Pattern;
 
 public final class DiscordWebhook {
     private static final Path CONFIG_FILE = Paths.get("config", "stokechat.conf");
-    private static final Path[] LEGACY_CONFIG_FILES = {
-        Paths.get("config", "mc2discord.conf"),
-        Paths.get("config", "mc2discord.txt")
-    };
     private static final Pattern WEBHOOK_PATH = Pattern.compile("^/api/webhooks/([0-9]+)/([^/]+)$");
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "stokechat-sender");
@@ -48,24 +44,17 @@ public final class DiscordWebhook {
         boolean exists = Files.exists(CONFIG_FILE);
         System.out.println("[StokeChat] Looking for config at " + absoluteConfigFile + "; exists=" + exists + ".");
         if (!exists) {
-            for (Path legacyConfigFile : LEGACY_CONFIG_FILES) {
-                if (Files.exists(legacyConfigFile)) {
-                    System.out.println("[StokeChat] Found legacy config at "
-                        + legacyConfigFile.toAbsolutePath().normalize() + "; migrating it.");
-                    return loadConfig(legacyConfigFile, true);
-                }
-            }
             System.err.println("[StokeChat] Config file is missing at " + absoluteConfigFile
-                + "; no legacy config file was found.");
+                + "; no webhook was loaded.");
             webhookUrl = null;
             return false;
         }
 
-        return loadConfig(CONFIG_FILE, false);
+        return loadConfig();
     }
 
-    private static boolean loadConfig(Path configFile, boolean migrate) throws IOException {
-        String url = new String(Files.readAllBytes(configFile), StandardCharsets.UTF_8);
+    private static boolean loadConfig() throws IOException {
+        String url = new String(Files.readAllBytes(CONFIG_FILE), StandardCharsets.UTF_8);
         if (!url.isEmpty() && url.charAt(0) == '\uFEFF') {
             url = url.substring(1);
         }
@@ -86,17 +75,7 @@ public final class DiscordWebhook {
         webhookUrl = url;
         System.out.println("[StokeChat] Webhook loaded: id=" + details.id
             + ", token length=" + details.token.length() + " characters from "
-            + configFile.toAbsolutePath().normalize() + ".");
-        if (migrate) {
-            try {
-                saveConfig(url);
-                System.out.println("[StokeChat] Legacy config migrated to "
-                    + CONFIG_FILE.toAbsolutePath().normalize() + ".");
-            } catch (IOException e) {
-                System.err.println("[StokeChat] Could not migrate legacy config ("
-                    + e.getClass().getSimpleName() + "); the legacy file was left untouched.");
-            }
-        }
+            + CONFIG_FILE.toAbsolutePath().normalize() + ".");
         return true;
     }
 

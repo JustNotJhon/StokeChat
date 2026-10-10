@@ -27,7 +27,7 @@ As an operator, run this command in the game chat or the server console:
 /webhook https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
 ```
 
-`/webook` is also accepted as an alias. The command validates the URL, saves it to `config/stokechat.conf`, and activates it immediately. On startup, StokeChat reads that file relative to the server's working directory. If `config/stokechat.conf` is missing but an older `config/mc2discord.conf` or `config/mc2discord.txt` exists, StokeChat loads the old file and attempts to migrate it automatically. If the webhook is configured after the server starts, StokeChat sends the pending startup announcement after saving it.
+`/webook` is also accepted as an alias. The command validates the URL, saves it to `config/stokechat.conf`, and activates it immediately. On startup, StokeChat reads that file relative to the server's working directory. If the webhook is configured after the server starts, StokeChat sends the pending startup announcement after saving it.
 
 You can also create `config/stokechat.conf` manually and put the complete webhook URL on a single line. Restart the server after editing the file so the new value is loaded.
 
@@ -55,4 +55,4 @@ To generate Minecraft sources:
 
 ## Project details
 
-The Fabric mod ID, Java packages, mixin configuration, project name, and built artifact are all named **StokeChat**. Existing `mc2discord.conf` and `mc2discord.txt` files are recognized and migrated on startup.
+The Fabric mod ID, Java packages, mixin configuration, project name, and built artifact are all named **StokeChat**.
