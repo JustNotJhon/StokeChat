@@ -62,7 +62,7 @@ Use the Gradle wrapper included in this repository:
 ./gradlew build
 ```
 
-The installable JAR is written to `build/libs/` with an `alpha.<year>.<month>.<day>.<build>` version. The `-sources.jar` file contains source code and is not the mod JAR to install.
+The installable JAR is written to `build/libs/` with a SemVer version such as `0.0.0-alpha.<year>.<month>.<day>.<build>`. The `-sources.jar` file contains source code and is not the mod JAR to install.
 
 To generate Minecraft sources:
 
