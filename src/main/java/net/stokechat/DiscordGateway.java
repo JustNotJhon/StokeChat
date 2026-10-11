@@ -29,7 +29,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.Console;
 import net.minecraft.text.ChatMessage;
 import net.minecraft.util.Tickable;
 
@@ -163,7 +162,7 @@ public final class DiscordGateway {
         String[] parts = command.split("\\s+", 3);
         if (parts.length == 0 || !"stokechat".equalsIgnoreCase(parts[0])) return false;
 
-        if (source != Console.INSTANCE) {
+        if (source != MinecraftServer.getServer()) {
             source.method_5505(ChatMessage.createTextMessage("StokeChat config commands are console-only."));
             return true;
         }
