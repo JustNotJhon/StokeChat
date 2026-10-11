@@ -22,4 +22,5 @@ gradlew.bat build     # Windows
 ```
 
 The installable JAR is created in `build/libs/`.
+
 "go live your life gng"
