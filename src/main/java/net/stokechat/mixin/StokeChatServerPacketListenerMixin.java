@@ -27,22 +27,11 @@ public abstract class StokeChatServerPacketListenerMixin {
         }
 
         if (msg == null) {
-            System.out.println("[StokeChat] Chat intercepted: player=" + username
-                + ", message is null; ignored.");
             return;
         }
 
         msg = msg.trim();
-        System.out.println("[StokeChat] Chat intercepted: player=" + username
-            + ", characters=" + msg.length() + ".");
-        if (msg.isEmpty()) {
-            System.out.println("[StokeChat] Empty message; ignored.");
-            return;
-        }
-        if (msg.startsWith("/")) {
-            System.out.println("[StokeChat] Command ignored by the chat forwarder.");
-            return;
-        }
+        if (msg.isEmpty() || msg.startsWith("/")) return;
 
         DiscordWebhook.send(username, msg);
     }

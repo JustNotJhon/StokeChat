@@ -22,9 +22,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.fabricmc.loader.api.FabricLoader;
 
 public final class DiscordWebhook {
-    private static final Path CONFIG_FILE = Paths.get("config", "stokechat.conf");
+    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("stokechat.conf");
+    private static final Path WORKING_DIRECTORY_CONFIG_FILE = Paths.get("config", "stokechat.conf")
+        .toAbsolutePath().normalize();
+    private static final Path[] LEGACY_CONFIG_FILES = {
+        CONFIG_FILE.getParent().resolve("mc2discord.conf"),
+        CONFIG_FILE.getParent().resolve("mc2discord.txt")
+    };
     private static final Pattern WEBHOOK_PATH = Pattern.compile("^/api/webhooks/([0-9]+)/([^/]+)$");
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "stokechat-sender");
@@ -43,19 +50,30 @@ public final class DiscordWebhook {
     public static boolean load() throws IOException {
         Path absoluteConfigFile = CONFIG_FILE.toAbsolutePath().normalize();
         boolean exists = Files.exists(CONFIG_FILE);
-        System.out.println("[StokeChat] Looking for config at " + absoluteConfigFile + "; exists=" + exists + ".");
         if (!exists) {
+            if (!absoluteConfigFile.equals(WORKING_DIRECTORY_CONFIG_FILE)
+                && Files.exists(WORKING_DIRECTORY_CONFIG_FILE)) {
+                System.out.println("[StokeChat] Migrating webhook config from the previous working-directory path.");
+                return loadConfig(WORKING_DIRECTORY_CONFIG_FILE, true);
+            }
+            for (Path legacyConfigFile : LEGACY_CONFIG_FILES) {
+                if (Files.exists(legacyConfigFile)) {
+                    System.out.println("[StokeChat] Found legacy config at "
+                        + legacyConfigFile.toAbsolutePath().normalize() + "; migrating it.");
+                    return loadConfig(legacyConfigFile, true);
+                }
+            }
             System.err.println("[StokeChat] Config file is missing at " + absoluteConfigFile
                 + "; no webhook was loaded.");
             webhookUrl = null;
             return false;
         }
 
-        return loadConfig();
+        return loadConfig(CONFIG_FILE, false);
     }
 
-    private static boolean loadConfig() throws IOException {
-        String url = new String(Files.readAllBytes(CONFIG_FILE), StandardCharsets.UTF_8);
+    private static boolean loadConfig(Path configFile, boolean migrate) throws IOException {
+        String url = new String(Files.readAllBytes(configFile), StandardCharsets.UTF_8);
         if (!url.isEmpty() && url.charAt(0) == '\uFEFF') {
             url = url.substring(1);
         }
@@ -74,9 +92,18 @@ public final class DiscordWebhook {
         }
 
         webhookUrl = url;
-        System.out.println("[StokeChat] Webhook loaded: id=" + details.id
-            + ", token length=" + details.token.length() + " characters from "
-            + CONFIG_FILE.toAbsolutePath().normalize() + ".");
+        System.out.println("[StokeChat] Outgoing Discord webhook loaded from "
+            + configFile.toAbsolutePath().normalize() + ".");
+        if (migrate) {
+            try {
+                saveConfig(url);
+                System.out.println("[StokeChat] Legacy config migrated to "
+                    + CONFIG_FILE.toAbsolutePath().normalize() + ".");
+            } catch (IOException e) {
+                System.err.println("[StokeChat] Could not migrate legacy config ("
+                    + e.getClass().getSimpleName() + "); the legacy file was left untouched.");
+            }
+        }
         return true;
     }
 
@@ -90,9 +117,7 @@ public final class DiscordWebhook {
 
         saveConfig(value);
         webhookUrl = value;
-        System.out.println("[StokeChat] Webhook configured: id=" + details.id
-            + ", token length=" + details.token.length() + " characters; config saved to "
-            + CONFIG_FILE.toAbsolutePath().normalize() + ".");
+        System.out.println("[StokeChat] Webhook configured.");
         announcePendingStartup();
         return true;
     }
@@ -167,6 +192,7 @@ public final class DiscordWebhook {
             serverStarted = true;
             if (webhookUrl == null || webhookUrl.isEmpty()) {
                 startupAnnouncementPending = true;
+                return;
             }
             enqueue("🟢 Minecraft server started.", "server startup", 0);
         }
@@ -239,10 +265,7 @@ public final class DiscordWebhook {
 
     private static Future<?> enqueue(String content, String description, int messageLength) {
         final String url = webhookUrl;
-        if (url == null || url.isEmpty()) {
-            System.err.println("[StokeChat] Skipping " + description + ": no webhook is configured.");
-            return null;
-        }
+        if (url == null || url.isEmpty()) return null;
 
         if (content.length() > 1900) content = content.substring(0, 1900);
 
@@ -261,8 +284,6 @@ public final class DiscordWebhook {
     private static void post(String url, String json, String description, int messageLength) {
         HttpURLConnection conn = null;
         try {
-            System.out.println("[StokeChat] Sending " + description + " to Discord"
-                + (messageLength > 0 ? ", characters=" + messageLength : "") + ".");
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(5000);
@@ -276,9 +297,7 @@ public final class DiscordWebhook {
             }
 
             int code = conn.getResponseCode();
-            if (code >= 200 && code < 300) {
-                System.out.println("[StokeChat] Send completed (" + description + ", HTTP " + code + ").");
-            } else {
+            if (code < 200 || code >= 300) {
                 String responseBody = readErrorBody(conn);
                 System.err.println("[StokeChat] Discord send failed: HTTP " + code
                     + "; response=" + sanitizeResponseBody(responseBody, url) + ".");
