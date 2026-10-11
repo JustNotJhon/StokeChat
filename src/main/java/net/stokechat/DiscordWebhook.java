@@ -22,12 +22,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.fabricmc.loader.api.FabricLoader;
 
 public final class DiscordWebhook {
-    private static final Path CONFIG_FILE = Paths.get("config", "stokechat.conf");
+    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("stokechat.conf");
+    private static final Path WORKING_DIRECTORY_CONFIG_FILE = Paths.get("config", "stokechat.conf")
+        .toAbsolutePath().normalize();
     private static final Path[] LEGACY_CONFIG_FILES = {
-        Paths.get("config", "mc2discord.conf"),
-        Paths.get("config", "mc2discord.txt")
+        CONFIG_FILE.getParent().resolve("mc2discord.conf"),
+        CONFIG_FILE.getParent().resolve("mc2discord.txt")
     };
     private static final Pattern WEBHOOK_PATH = Pattern.compile("^/api/webhooks/([0-9]+)/([^/]+)$");
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(r -> {
@@ -48,6 +51,11 @@ public final class DiscordWebhook {
         Path absoluteConfigFile = CONFIG_FILE.toAbsolutePath().normalize();
         boolean exists = Files.exists(CONFIG_FILE);
         if (!exists) {
+            if (!absoluteConfigFile.equals(WORKING_DIRECTORY_CONFIG_FILE)
+                && Files.exists(WORKING_DIRECTORY_CONFIG_FILE)) {
+                System.out.println("[StokeChat] Migrating webhook config from the previous working-directory path.");
+                return loadConfig(WORKING_DIRECTORY_CONFIG_FILE, true);
+            }
             for (Path legacyConfigFile : LEGACY_CONFIG_FILES) {
                 if (Files.exists(legacyConfigFile)) {
                     System.out.println("[StokeChat] Found legacy config at "
@@ -84,6 +92,8 @@ public final class DiscordWebhook {
         }
 
         webhookUrl = url;
+        System.out.println("[StokeChat] Outgoing Discord webhook loaded from "
+            + configFile.toAbsolutePath().normalize() + ".");
         if (migrate) {
             try {
                 saveConfig(url);
