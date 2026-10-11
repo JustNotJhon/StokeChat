@@ -3,7 +3,7 @@
   "id": "stokechat",
   "version": "${version}",
   "name": "StokeChat",
-  "description": "Forwards Minecraft chat and server activity announcements to Discord via a webhook.",
+  "description": "Bridges Minecraft chat and server events with Discord.",
   "environment": "*",
   "entrypoints": {
     "main": [

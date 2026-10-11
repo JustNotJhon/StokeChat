@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,7 +47,6 @@ public final class DiscordWebhook {
     public static boolean load() throws IOException {
         Path absoluteConfigFile = CONFIG_FILE.toAbsolutePath().normalize();
         boolean exists = Files.exists(CONFIG_FILE);
-        System.out.println("[StokeChat] Looking for config at " + absoluteConfigFile + "; exists=" + exists + ".");
         if (!exists) {
             for (Path legacyConfigFile : LEGACY_CONFIG_FILES) {
                 if (Files.exists(legacyConfigFile)) {
@@ -84,9 +84,6 @@ public final class DiscordWebhook {
         }
 
         webhookUrl = url;
-        System.out.println("[StokeChat] Webhook loaded: id=" + details.id
-            + ", token length=" + details.token.length() + " characters from "
-            + configFile.toAbsolutePath().normalize() + ".");
         if (migrate) {
             try {
                 saveConfig(url);
@@ -110,9 +107,7 @@ public final class DiscordWebhook {
 
         saveConfig(value);
         webhookUrl = value;
-        System.out.println("[StokeChat] Webhook configured: id=" + details.id
-            + ", token length=" + details.token.length() + " characters; config saved to "
-            + CONFIG_FILE.toAbsolutePath().normalize() + ".");
+        System.out.println("[StokeChat] Webhook configured.");
         announcePendingStartup();
         return true;
     }
@@ -187,6 +182,7 @@ public final class DiscordWebhook {
             serverStarted = true;
             if (webhookUrl == null || webhookUrl.isEmpty()) {
                 startupAnnouncementPending = true;
+                return;
             }
             enqueue("🟢 Minecraft server started.", "server startup", 0);
         }
@@ -222,12 +218,44 @@ public final class DiscordWebhook {
         enqueue("⬅️ **" + player + "** left the server.", "departure of " + player, 0);
     }
 
+    public static void announcePlayerDeath(String player, String deathMessage) {
+        enqueue("💀 " + deathMessage, "death of " + player, 0);
+    }
+
+    public static void announceAchievement(String player, String achievement) {
+        String name = displayAchievementName(achievement);
+        enqueue("🏆 **" + player + "** earned **" + name + "**.", "achievement earned by " + player, 0);
+    }
+
+    private static String displayAchievementName(String achievement) {
+        if (!achievement.startsWith("achievement.")) return achievement;
+
+        String name = achievement.substring("achievement.".length());
+        int namespaceSeparator = name.indexOf('.');
+        if (namespaceSeparator >= 0) name = name.substring(namespaceSeparator + 1);
+        name = name.replaceAll("([a-z])([A-Z])", "$1 $2")
+            .replace('_', ' ')
+            .toLowerCase(Locale.ROOT)
+            .trim();
+
+        StringBuilder title = new StringBuilder(name.length());
+        boolean capitalize = true;
+        for (int index = 0; index < name.length(); index++) {
+            char character = name.charAt(index);
+            if (Character.isWhitespace(character)) {
+                capitalize = true;
+                title.append(character);
+            } else {
+                title.append(capitalize ? Character.toUpperCase(character) : character);
+                capitalize = false;
+            }
+        }
+        return title.toString();
+    }
+
     private static Future<?> enqueue(String content, String description, int messageLength) {
         final String url = webhookUrl;
-        if (url == null || url.isEmpty()) {
-            System.err.println("[StokeChat] Skipping " + description + ": no webhook is configured.");
-            return null;
-        }
+        if (url == null || url.isEmpty()) return null;
 
         if (content.length() > 1900) content = content.substring(0, 1900);
 
@@ -246,8 +274,6 @@ public final class DiscordWebhook {
     private static void post(String url, String json, String description, int messageLength) {
         HttpURLConnection conn = null;
         try {
-            System.out.println("[StokeChat] Sending " + description + " to Discord"
-                + (messageLength > 0 ? ", characters=" + messageLength : "") + ".");
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(5000);
@@ -261,9 +287,7 @@ public final class DiscordWebhook {
             }
 
             int code = conn.getResponseCode();
-            if (code >= 200 && code < 300) {
-                System.out.println("[StokeChat] Send completed (" + description + ", HTTP " + code + ").");
-            } else {
+            if (code < 200 || code >= 300) {
                 String responseBody = readErrorBody(conn);
                 System.err.println("[StokeChat] Discord send failed: HTTP " + code
                     + "; response=" + sanitizeResponseBody(responseBody, url) + ".");

@@ -1,14 +1,15 @@
 # StokeChat
 
-StokeChat is a server-side Minecraft mod that forwards normal in-game chat to a Discord channel through a Discord webhook. It can also announce server startup and player joins and departures.
+StokeChat is a server-side Minecraft mod that bridges in-game chat and server events with Discord. It forwards Minecraft chat through a Discord webhook and can relay messages from one Discord channel into Minecraft.
 
 ## Features
 
 - Forwards normal player chat to Discord.
 - Announces when the dedicated server starts or stops and when players join or leave.
-- Lets an operator configure the webhook from the game chat or server console.
+- Lets an operator configure the outgoing webhook from the game chat or server console.
 - Saves the webhook locally and reloads it when the server starts.
 - Sends messages asynchronously so Discord requests do not block the server thread.
+- Relays messages from one configured Discord channel into Minecraft through the Discord Gateway.
 
 ## Requirements
 
@@ -16,6 +17,7 @@ StokeChat is a server-side Minecraft mod that forwards normal in-game chat to a 
 - Legacy Fabric with Fabric Loader
 - Java 8-compatible mod bytecode
 - A Discord webhook for the channel where messages should appear
+- A Discord bot with View Channel and Read Message History permissions and the Message Content Intent enabled
 
 Install the mod JAR in the server's `mods` directory. To use a full webhook URL from the in-game chat, install the same JAR on the client as well; the client mixin increases the chat input limit so the URL can be entered.
 
@@ -37,6 +39,21 @@ A webhook URL contains a secret token. Do not commit `config/stokechat.conf`, po
 
 StokeChat does not print the webhook URL or token in its logs. Error response bodies are truncated and sanitized before logging.
 
+## Configure Discord-to-Minecraft
+
+Configure the Discord bot from the dedicated server console, not in game chat. Enter these commands directly in the Minecraft server console, not at the shell prompt:
+
+```text
+stokechat token YOUR_DISCORD_BOT_TOKEN
+stokechat channel YOUR_DISCORD_CHANNEL_ID
+```
+
+These commands are console-only and are not available to operators in game. Values are saved to `config/stokechat-discord.conf` with owner-only permissions where supported. Setting either value reconnects the Gateway when both values are available. The channel ID can be copied from Discord with Developer Mode enabled. Messages from other channels, bots, and webhooks are ignored. Discord links are replaced with a short notice, and the sender name uses the closest Minecraft chat color to their highest colored Discord role. No inbound port is opened; the mod makes an outbound Gateway connection.
+
+The token is never printed in StokeChat logs, but the server terminal echoes typed commands; avoid screenshots or logs that show the token. Alternatively, set `STOKECHAT_DISCORD_BOT_TOKEN` and `STOKECHAT_DISCORD_CHANNEL_ID` in the server process environment; environment values override the matching file values. The bot must have access to the selected channel, and Message Content Intent must be enabled in the Discord Developer Portal.
+
+Discord send successes are not printed to the server console; failures are still logged. Achievements are forwarded with their translated name when available and a readable fallback for untranslated keys.
+
 ## Build from source
 
 Use the Gradle wrapper included in this repository:
@@ -45,7 +62,7 @@ Use the Gradle wrapper included in this repository:
 ./gradlew build
 ```
 
-The installable JAR is written to `build/libs/`. The `-sources.jar` file contains source code and is not the mod JAR to install.
+The installable JAR is written to `build/libs/` with an `alpha.<year>.<month>.<day>.<build>` version. The `-sources.jar` file contains source code and is not the mod JAR to install.
 
 To generate Minecraft sources:
 

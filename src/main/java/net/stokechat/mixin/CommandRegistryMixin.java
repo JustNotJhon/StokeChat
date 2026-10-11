@@ -1,6 +1,7 @@
 package net.stokechat.mixin;
 
 import net.stokechat.DiscordWebhook;
+import net.stokechat.DiscordGateway;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.CommandRegistry;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class CommandRegistryMixin {
     @Inject(method = "execute", at = @At("HEAD"), cancellable = true)
     private void stokechat$setWebhook(CommandSource source, String input, CallbackInfoReturnable<Integer> cir) {
-        if (DiscordWebhook.handleWebhookCommand(source, input)) {
+        if (DiscordGateway.handleConsoleCommand(source, input)
+            || DiscordWebhook.handleWebhookCommand(source, input)) {
             cir.setReturnValue(1);
         }
     }

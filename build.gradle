@@ -15,12 +15,23 @@ repositories {
         name = "Legacy Fabric"
         url = "https://maven.legacyfabric.net/"
     }
+    mavenCentral()
+}
+
+configurations {
+    bundled
+    implementation.extendsFrom(bundled)
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings(legacy.yarn(project.minecraft_version, project.yarn_build))
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    bundled("net.dv8tion:JDA:5.0.0") {
+        exclude group: "club.minnced", module: "opus-java"
+        exclude group: "com.google.crypto.tink", module: "tink"
+    }
+    bundled("org.slf4j:slf4j-nop:2.0.13")
 }
 
 processResources {
@@ -46,6 +57,11 @@ java {
 
 jar {
     inputs.property "archivesName", project.base.archivesName
+    from {
+        configurations.bundled.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "META-INF/INDEX.LIST"
 }
 
 publishing {

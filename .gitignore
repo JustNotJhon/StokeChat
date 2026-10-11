@@ -32,6 +32,7 @@ bin/
 
 run/
 config/stokechat.conf
+config/stokechat-discord.conf
 config/mc2discord.conf
 config/mc2discord.txt
 
