@@ -5,11 +5,13 @@ StokeChat is a server-side Minecraft mod that bridges in-game chat and server ev
 ## Features
 
 - Forwards normal player chat to Discord.
-- Announces when the dedicated server starts or stops and when players join or leave.
-- Lets an operator configure the outgoing webhook from the game chat or server console.
-- Saves the webhook locally and reloads it when the server starts.
+- Announces when the dedicated server starts or stops, when players join or leave, and when they die or earn achievements.
+- Lets an operator configure the outgoing webhook from game chat or the server console.
+- Saves Discord credentials locally and reloads them at dedicated-server startup.
 - Sends messages asynchronously so Discord requests do not block the server thread.
 - Relays messages from one configured Discord channel into Minecraft through the Discord Gateway.
+- Replaces Discord links with a short notice and colors sender names to match their highest colored Discord role.
+- Keeps routine message and HTTP success logs out of the server console.
 
 ## Requirements
 
@@ -29,9 +31,9 @@ As an operator, run this command in the game chat or the server console:
 /webhook https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
 ```
 
-`/webook` is also accepted as an alias. The command validates the URL, saves it to `config/stokechat.conf`, and activates it immediately. On startup, StokeChat reads that file relative to the server's working directory. If `config/stokechat.conf` is missing but an older `config/mc2discord.conf` or `config/mc2discord.txt` exists, StokeChat loads the old file and attempts to migrate it automatically. If the webhook is configured after the server starts, StokeChat sends the pending startup announcement after saving it.
+`/webook` is also accepted as an alias. The command validates the URL, saves it to the Fabric config directory as `stokechat.conf`, and activates it immediately. On Debian this is normally `~/BTW/config/stokechat.conf`. At startup, StokeChat loads it before sending server announcements. If the file is missing there, it checks the previous working-directory path and older `mc2discord.conf` or `mc2discord.txt` files, migrating a found URL into the Fabric config directory.
 
-You can also create `config/stokechat.conf` manually and put the complete webhook URL on a single line. Restart the server after editing the file so the new value is loaded.
+You can also create the file manually and put the complete webhook URL on a single line. Restart the server after editing it. Prefer the server console over game chat when entering the URL, because command input may be visible in chat history or logs.
 
 ## Keep your webhook private
 
@@ -41,16 +43,16 @@ StokeChat does not print the webhook URL or token in its logs. Error response bo
 
 ## Configure Discord-to-Minecraft
 
-Configure the Discord bot from the dedicated server console, not in game chat. Enter these commands directly in the Minecraft server console, not at the shell prompt:
+Configure the Discord bot from the local dedicated-server console, not from game chat, RCON, or the shell prompt:
 
 ```text
 stokechat token YOUR_DISCORD_BOT_TOKEN
 stokechat channel YOUR_DISCORD_CHANNEL_ID
 ```
 
-These commands are console-only and are not available to operators in game. Values are saved to `config/stokechat-discord.conf` with owner-only permissions where supported. Setting either value reconnects the Gateway when both values are available. The channel ID can be copied from Discord with Developer Mode enabled. Messages from other channels, bots, and webhooks are ignored. Discord links are replaced with a short notice, and the sender name uses the closest Minecraft chat color to their highest colored Discord role. No inbound port is opened; the mod makes an outbound Gateway connection.
+These commands are accepted only by the local server console and are not available to operators in game or through RCON. Values are saved to `config/stokechat-discord.conf` in the Fabric config directory, with owner-only permissions where supported. Setting either value reconnects the Gateway once both values are available. The channel ID can be copied from Discord with Developer Mode enabled. Messages from other channels, bots, and webhooks are ignored. Discord links are replaced by `[Discord] name sent a link.` without forwarding the URL. Sender names use the closest Minecraft chat color to their highest colored Discord role. No inbound port is opened; the mod makes an outbound Gateway connection.
 
-The token is never printed in StokeChat logs, but the server terminal echoes typed commands; avoid screenshots or logs that show the token. Alternatively, set `STOKECHAT_DISCORD_BOT_TOKEN` and `STOKECHAT_DISCORD_CHANNEL_ID` in the server process environment; environment values override the matching file values. The bot must have access to the selected channel, and Message Content Intent must be enabled in the Discord Developer Portal.
+The token is never printed by StokeChat, but the server terminal may echo typed commands; do not share screenshots or logs containing the token. Alternatively, set `STOKECHAT_DISCORD_BOT_TOKEN` and `STOKECHAT_DISCORD_CHANNEL_ID` in the server process environment; environment values override matching file values. The bot needs access to the selected channel and the **Message Content Intent** enabled in the Discord Developer Portal. For Gateway relay, invite it with the `bot` OAuth scope and channel viewing/read-history permissions. The outgoing webhook is configured separately.
 
 Discord send successes are not printed to the server console; failures are still logged. Achievements are forwarded with their translated name when available and a readable fallback for untranslated keys.
 
@@ -62,7 +64,7 @@ Use the Gradle wrapper included in this repository:
 ./gradlew build
 ```
 
-The installable JAR is written to `build/libs/` with a SemVer version such as `0.0.0-alpha.<year>.<month>.<day>.<build>`. The `-sources.jar` file contains source code and is not the mod JAR to install.
+The installable JAR is written to `build/libs/` with a SemVer version such as `0.0.0-alpha.<year>.<month>.<day>.<build>`. The current build is `0.0.0-alpha.2026.10.11.3`. The `-sources.jar` file contains source code and is not the mod JAR to install.
 
 To generate Minecraft sources:
 
