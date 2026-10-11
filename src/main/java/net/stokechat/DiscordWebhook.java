@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -201,12 +202,39 @@ public final class DiscordWebhook {
         enqueue("⬅️ **" + player + "** left the server.", "departure of " + player, 0);
     }
 
-    public static void announcePlayerDeath(String player) {
-        enqueue("💀 **" + player + "** died.", "death of " + player, 0);
+    public static void announcePlayerDeath(String player, String deathMessage) {
+        enqueue("💀 " + deathMessage, "death of " + player, 0);
     }
 
-    public static void announceAchievement(String player) {
-        enqueue("🏆 **" + player + "** earned an achievement.", "achievement earned by " + player, 0);
+    public static void announceAchievement(String player, String achievement) {
+        String name = displayAchievementName(achievement);
+        enqueue("🏆 **" + player + "** earned **" + name + "**.", "achievement earned by " + player, 0);
+    }
+
+    private static String displayAchievementName(String achievement) {
+        if (!achievement.startsWith("achievement.")) return achievement;
+
+        String name = achievement.substring("achievement.".length());
+        int namespaceSeparator = name.indexOf('.');
+        if (namespaceSeparator >= 0) name = name.substring(namespaceSeparator + 1);
+        name = name.replaceAll("([a-z])([A-Z])", "$1 $2")
+            .replace('_', ' ')
+            .toLowerCase(Locale.ROOT)
+            .trim();
+
+        StringBuilder title = new StringBuilder(name.length());
+        boolean capitalize = true;
+        for (int index = 0; index < name.length(); index++) {
+            char character = name.charAt(index);
+            if (Character.isWhitespace(character)) {
+                capitalize = true;
+                title.append(character);
+            } else {
+                title.append(capitalize ? Character.toUpperCase(character) : character);
+                capitalize = false;
+            }
+        }
+        return title.toString();
     }
 
     private static Future<?> enqueue(String content, String description, int messageLength) {
