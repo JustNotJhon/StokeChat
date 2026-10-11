@@ -64,7 +64,7 @@ public final class DiscordWebhook {
                 }
             }
             System.err.println("[StokeChat] Config file is missing at " + absoluteConfigFile
-                + "; no legacy config file was found.");
+                + "; no webhook was loaded.");
             webhookUrl = null;
             return false;
         }
