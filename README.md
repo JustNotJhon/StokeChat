@@ -40,7 +40,16 @@ stokechat channel YOUR_DISCORD_CHANNEL_ID
 
 Values are saved to `config/stokechat-discord.conf` with owner-only permissions where supported. Setting either value reconnects the Gateway once both are configured. The terminal may echo the token as you type; do not share screenshots or logs containing it. Environment variables `STOKECHAT_DISCORD_BOT_TOKEN` and `STOKECHAT_DISCORD_CHANNEL_ID` are also supported and override the corresponding file values.
 
-Enable Message Content Intent in the Discord Developer Portal and invite the bot with the `bot` OAuth scope and permissions to view the channel and read message history. Enable Developer Mode in Discord to copy the channel ID. Messages from other channels, bots, and webhooks are ignored. Discord links appear as `[Discord] name sent a link.` without forwarding the URL. The bot connection is outbound; StokeChat opens no inbound ports.
+### Discord Developer Portal setup
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications), create an application, then open its **Bot** page and add a bot if one is not already attached.
+2. On **Bot**, enable **Message Content Intent** under **Privileged Gateway Intents** and save the change. This is required for the bot to read message text.
+3. Open **OAuth2 → URL Generator**. Under **Scopes**, select only `bot`. Do not select `messages.read`, `email`, or other user-install scopes.
+4. Under **Integration Type**, choose **Guild Install**. If it is unavailable, enable Guild Install in the application's **Installation → Installation Contexts** settings.
+5. Under **Bot Permissions**, select **View Channels** and **Read Message History**. Administrator and Send Messages are not required for this relay; Minecraft-to-Discord continues to use the separate webhook.
+6. Copy the generated URL, open it, choose your Discord server, and authorize the bot. Confirm that the bot appears in the server member list and can view the channel you intend to bridge.
+
+Enable Developer Mode in the Discord client, then use the channel context menu's **Copy Channel ID** action. Enter that ID with `stokechat channel <channel-id>` in the local Minecraft server console. Configure the bot token there with `stokechat token <bot-token>`; never paste it into chat, the README, or a shared screenshot. Messages from other channels, bots, and webhooks are ignored. Discord links appear as `[Discord] name sent a link.` without forwarding the URL. The bot connection is outbound; StokeChat opens no inbound ports.
 
 ## Build
 
